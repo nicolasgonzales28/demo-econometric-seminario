@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Analisis{% endblock %}
+
+{% block content %}
+<h2 class="mt-5">Análisis de tus Movimientos Financieros</h2>
+
+    <h4 class="text-center mt-3 text-muted">Gráfico de Barras</h4>
+
+    <div style="position: relative; width: 80%; max-width: 750px; height: 650px; margin: auto;" class="mt-4">
+        <canvas id="graficoMovimientos"></canvas>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    const movimientos = {{ movimientos|tojson }};
+
+    let totalIngresos = 0;
+    let totalEgresos = 0;
+
+    movimientos.forEach(mov => {
+        const monto = parseFloat(mov[1]);
+
+        if (mov[2] === 'ingreso') {
+            totalIngresos += monto;
+        } else if (mov[2] === 'egreso') {
+            totalEgresos += monto;
+        }
+    });
+
+    const ctx = document.getElementById('graficoMovimientos').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Total Ingresos', 'Total Egresos'],
+            datasets: [{
+                label: 'Monto',
+                data: [totalIngresos, totalEgresos],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(255, 99, 132, 0.6)'
+                ],
+                borderColor: [
+                    'rgb(75, 192, 192)',
+                    'rgb(255, 99, 132)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$ ' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += '$ ' + context.parsed.y;
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
